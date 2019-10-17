@@ -24,10 +24,10 @@ def get_browser():
     os.mkdir(ADDONS_PATH)
     ext_prefix = 'https://addons.mozilla.org/en-US/firefox/addon/'
     exts = [
+        'ublock-origin',  # Blocks ads & such
+        'umatrix',  # Will block Disqus on HorribleSubs automatically
         'https-everywhere',  # TODO: Figure out how to enable 'Encryt All Sites Eligble'
         'decentraleyes',  # Blocks Content Management Systems and handles their abilities locally
-        'ublock-origin',  # Blocks ads & such
-        'umatrix'  # Will block Disqus on HorribleSubs automatically
     ]
     profile = webdriver.FirefoxProfile()
 
@@ -83,14 +83,13 @@ def quit(browser):
 
 if __name__ == "__main__":
     browser = get_browser()
-    headers = {} # Headers required, else you'll get a 403
-    headers['User-Agent'] = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:48.0) Gecko/20100101 Firefox/48.0"
-    req = Web.Request('https://horriblesubs.info/current-season/', headers=headers)
-    src = Web.urlopen(req).read()
+    browser.get('https://horriblesubs.info/current-season/')
+    src = browser.page_source
     parser = Soup(src, features='html.parser')
     divs = parser.body.find_all('div', attrs={'class': 'ind-show'})
     size = len(divs)
 
+    # BUG: Doesn't iterate over all the shows
     for i, div in enumerate(divs):
         browser.get('https://horriblesubs.info' + div.a['href'])
 
@@ -98,6 +97,7 @@ if __name__ == "__main__":
         WebDriverWait(browser, 10).until(EC.visibility_of_element_located((By.CLASS_NAME, 'show-more')))
 
         # Expand the whole listing to get all the episodes
+        # BUG: Will sometimes stall while expanding the listing
         elem = browser.find_element_by_class_name('show-more')
         while elem.text != 'No more results':
             elem.click()
