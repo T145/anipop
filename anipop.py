@@ -1,17 +1,17 @@
 import os
 import shutil
 
+from qbittorrent import Client
 import urllib.request as Web
 from bs4 import BeautifulSoup as Soup
 import wget
 
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-
-from qbittorrent import Client
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 # TODO: Check if this drive is full, and switch to an available one
 DL_PATH = 'E:/Torrents/'
@@ -39,7 +39,7 @@ def get_browser():
 
     # Privacy settings (https://restoreprivacy.com/firefox-privacy/)
     # TODO: Cross-reference w/ https://www.privacytools.io/
-    #profile.set_preference('browser.privatebrowsing.autostart', True) # TODO: Figure out how to allow addons in PB
+    # profile.set_preference('browser.privatebrowsing.autostart', True) # TODO: Figure out how to allow addons in PB
     profile.set_preference('media.peerconnection.enabled', False)
     profile.set_preference('privacy.resistFingerprinting', True)
     profile.set_preference('privacy.trackingprotection.fingerprinting.enabled', True)
@@ -73,6 +73,8 @@ def get_browser():
     # Just to escape out of wget's printed progress bar to normalize future logging
     print('\n')
 
+    ActionChains(browser).key_down(Keys.LEFT_CONTROL).key_down(Keys.SUBTRACT).key_up(Keys.SUBTRACT).key_up(Keys.LEFT_CONTROL)
+
     return browser
 
 
@@ -88,6 +90,7 @@ if __name__ == "__main__":
     parser = Soup(src, features='html.parser')
     divs = parser.body.find_all('div', attrs={'class': 'ind-show'})
     size = len(divs)
+    print('Downloading ', size, ' shows')
 
     # BUG: Doesn't iterate over all the shows
     for i, div in enumerate(divs):
@@ -97,14 +100,9 @@ if __name__ == "__main__":
         WebDriverWait(browser, 10).until(EC.visibility_of_element_located((By.CLASS_NAME, 'show-more')))
 
         # Expand the whole listing to get all the episodes
-        # BUG: Will sometimes stall while expanding the listing
         elem = browser.find_element_by_class_name('show-more')
         while elem.text != 'No more results':
             elem.click()
-            elem = browser.find_element_by_class_name('show-more')
-            # The page may actually be loading too fast for larger listings,
-            # b/c some episode numbers appear to be duplicating.
-            # Not yet verified if QB is dling dupes though
 
         src = browser.page_source
         parser = Soup(src, features='html.parser')
