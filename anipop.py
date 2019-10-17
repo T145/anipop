@@ -90,7 +90,6 @@ if __name__ == "__main__":
     size = len(divs)
     print('Downloading ', size, ' shows')
 
-    # BUG: Doesn't iterate over all the shows
     for i, div in enumerate(divs):
         browser.get('https://horriblesubs.info' + div.a['href'])
 
@@ -101,6 +100,8 @@ if __name__ == "__main__":
         elem = browser.find_element_by_class_name('show-more')
         while elem.text != 'No more results':
             elem.click()
+            # BUG: Sometimes `show-more` will get clipped out of the window, stalling the script
+            # Potential solution: Simulating a mouse scroll or adjusting the zoom level to 90%
 
         src = browser.page_source
         parser = Soup(src, features='html.parser')
