@@ -73,8 +73,6 @@ def get_browser():
     # Just to escape out of wget's printed progress bar to normalize future logging
     print('\n')
 
-    ActionChains(browser).key_down(Keys.LEFT_CONTROL).key_down(Keys.SUBTRACT).key_up(Keys.SUBTRACT).key_up(Keys.LEFT_CONTROL)
-
     return browser
 
 
@@ -123,6 +121,6 @@ if __name__ == "__main__":
                 magnet = link_rel.find('a', attrs={'title': 'Magnet Link'})['href']
                 QB.download_from_link(magnet, category='anime', savepath=DL_PATH + div.a.text)
 
-        print('Progress: ' + str(round(((i + 1) / size) * 100, 2)) + '%')
+        print('Progress: ', round(((i + 1) / size) * 100, 2), '%')
 
     quit(browser)
