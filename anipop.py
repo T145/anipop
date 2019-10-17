@@ -100,8 +100,7 @@ if __name__ == "__main__":
         elem = browser.find_element_by_class_name('show-more')
         while elem.text != 'No more results':
             elem.click()
-            # BUG: Sometimes `show-more` will get clipped out of the window, stalling the script
-            # Potential solution: Simulating a mouse scroll or adjusting the zoom level to 90%
+            browser.execute_script('window.scrollBy(0,1000)')
 
         src = browser.page_source
         parser = Soup(src, features='html.parser')
