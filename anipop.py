@@ -10,8 +10,6 @@ from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
 
 # TODO: Check if this drive is full, and switch to an available one
 DL_PATH = 'E:/Torrents/'
@@ -39,7 +37,8 @@ def get_browser():
 
     # Privacy settings (https://restoreprivacy.com/firefox-privacy/)
     # TODO: Cross-reference w/ https://www.privacytools.io/
-    # profile.set_preference('browser.privatebrowsing.autostart', True) # TODO: Figure out how to allow addons in PB
+    profile.set_preference('extensions.allowPrivateBrowsingByDefault', True)
+    profile.set_preference('browser.privatebrowsing.autostart', True)
     profile.set_preference('media.peerconnection.enabled', False)
     profile.set_preference('privacy.resistFingerprinting', True)
     profile.set_preference('privacy.trackingprotection.fingerprinting.enabled', True)
@@ -97,10 +96,14 @@ if __name__ == "__main__":
         WebDriverWait(browser, 10).until(EC.visibility_of_element_located((By.CLASS_NAME, 'show-more')))
 
         # Expand the whole listing to get all the episodes
+        # TODO: Optimize this load time
+        # - If episode one of a show is shown, break the loop
+        # - If the element is not visible, then scroll
+        #       (for some reason elem.is_displayed doesn't like me)
         elem = browser.find_element_by_class_name('show-more')
         while elem.text != 'No more results':
             elem.click()
-            browser.execute_script('window.scrollBy(0,1000)')
+            browser.execute_script('window.scrollBy(0,500)')
 
         src = browser.page_source
         parser = Soup(src, features='html.parser')
