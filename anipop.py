@@ -10,6 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
 
 # TODO: Check if this drive is full, and switch to an available one
 DL_PATH = 'E:/Torrents/'
@@ -92,18 +93,17 @@ if __name__ == "__main__":
     for i, div in enumerate(divs):
         browser.get('https://horriblesubs.info' + div.a['href'])
 
-        # Wait to dodge `selenium.common.exceptions.ElementNotInteractableException: Message: Element <div class="show-more"> could not be scrolled into view`
-        WebDriverWait(browser, 10).until(EC.visibility_of_element_located((By.CLASS_NAME, 'show-more')))
+        # Wait to dodge `selenium.common.exceptions.ElementNotInteractableException: Message: Element could not be scrolled into view`
+        WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'more-button')))
 
         # Expand the whole listing to get all the episodes
         # TODO: Optimize this load time
         # - If episode one of a show is shown, break the loop
-        # - If the element is not visible, then scroll
-        #       (for some reason elem.is_displayed doesn't like me)
-        elem = browser.find_element_by_class_name('show-more')
-        while elem.text != 'No more results':
-            elem.click()
-            browser.execute_script('window.scrollBy(0,500)')
+        try:
+            while True:
+                browser.find_element_by_class_name('more-button').click()
+        except NoSuchElementException as err:
+            pass
 
         src = browser.page_source
         parser = Soup(src, features='html.parser')
