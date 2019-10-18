@@ -97,10 +97,8 @@ if __name__ == "__main__":
         WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'more-button')))
 
         # Expand the whole listing to get all the episodes
-        # TODO: Optimize this load time
-        # - If episode one of a show is shown, break the loop
         try:
-            while True:
+            while not browser.find_element_by_id('01').is_displayed():
                 browser.find_element_by_class_name('more-button').click()
         except NoSuchElementException as err:
             pass
