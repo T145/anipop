@@ -81,6 +81,22 @@ options.headless = True
 
 browser = webdriver.Firefox(firefox_profile=profile, options=options)
 
+ext_prefix = 'https://addons.mozilla.org/en-US/firefox/addon/'
+exts = [
+    # 'ublock-origin',  # Blocks ads & such
+    # 'https-everywhere',  # TODO: Figure out how to enable 'Encryt All Sites Eligble'
+    # 'decentraleyes',  # Blocks Content Management Systems and handles their abilities locally
+    'umatrix'  # Will block Disqus on HorribleSubs automatically
+]
+
+for ext in exts:
+    browser.get(ext_prefix + ext)
+    btn = browser.find_element_by_class_name('AMInstallButton')
+    ref = btn.find_element_by_tag_name('a').get_attribute('href')
+    url = ref.split('?')[0]
+    addon = download(url, out=addons_path).replace('/', '')
+    browser.install_addon(addon, temporary=True)
+
 browser.get('https://horriblesubs.info/current-season/')
 src = browser.page_source
 parser = Soup(src, features='html.parser')
@@ -88,15 +104,14 @@ divs = parser.body.find_all('div', attrs={'class': 'ind-show'})
 size = len(divs)
 season = defaultdict(list)
 
-print('Downloading', size, 'shows')
+print('\nDownloading', size, 'shows')
 
 try:
     for i, div in enumerate(divs):
         browser.get('https://horriblesubs.info' + div.a['href'])
 
         # Wait to dodge `selenium.common.exceptions.ElementNotInteractableException: Message: Element could not be scrolled into view`
-        WebDriverWait(browser, 15).until(
-            EC.element_to_be_clickable((By.CLASS_NAME, 'more-button')))
+        WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, 'more-button')))
 
         # Expand the whole listing to get all the episodes
         if not browser.find_elements_by_id('01'):
