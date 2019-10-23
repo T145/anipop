@@ -1,6 +1,11 @@
 import os
-
+from typing import Dict, Any
 from shutil import rmtree
+from wget import download
+from collections import defaultdict
+
+import urllib.request as Web
+from bs4 import BeautifulSoup as Soup
 
 from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,54 +13,45 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 
-import urllib.request as Web
-from bs4 import BeautifulSoup as Soup
 from qbittorrent import Client as qBittorrent
-from wget import download
-from collections import defaultdict
 
-
-def get_dl_path():
-    # TODO: Check if this drive has space, else check another drive
-    # if there's no free space, crash
-    return 'E:/Torrents/'
 
 profile = webdriver.FirefoxProfile()
 
-# Run the browser in private mode
-profile.set_preference('extensions.allowPrivateBrowsingByDefault', True)
-profile.set_preference('browser.privatebrowsing.autostart', True)
+profile_settings: Dict[str, Any] = {
+    'extensions.allowPrivateBrowsingByDefault': True,
+    'browser.privatebrowsing.autostart': True,
+    'media.peerconnection.turn.disable': True,
+    'media.peerconnection.use_document_iceservers': False,
+    'media.peerconnection.video.enabled': False,
+    'media.peerconnection.identity.timeout': 1,
+    'privacy.firstparty.isolate': True,
+    'privacy.resistFingerprinting': True,
+    'privacy.trackingprotection.fingerprinting.enabled': True,
+    'privacy.trackingprotection.cryptomining.enabled': True,
+    'privacy.trackingprotection.enabled': True,
+    'browser.send_pings': False,
+    'browser.sessionstore.max_tabs_undo': 0,
+    'browser.sessionstore.privacy_level': 2,
+    'browser.urlbar.speculativeConnect.enabled': False,
+    'dom.event.clipboardevents.enabled': False,
+    'media.eme.enabled': False,
+    'media.gmp-widevinecdm.enabled': False,
+    'media.navigator.enabled': False,
+    'network.cookie.cookieBehavior': 2,
+    'network.cookie.lifetimePolicy': 2,
+    'network.http.referer.XOriginPolicy': 2,
+    'network.http.referer.XOriginTrimmingPolicy': 2,
+    'network.IDN_show_punycode': True,
+    'webgl.disabled': True,
+    'geo.enabled': False,
+    'media.peerconnection.enabled': False,
+    'network.dns.disablePrefetch': True,
+    'network.prefetch-next': False
+}
 
-# Privacy settings (https://www.privacytools.io/)
-profile.set_preference('media.peerconnection.turn.disable', True)
-profile.set_preference('media.peerconnection.use_document_iceservers', False)
-profile.set_preference('media.peerconnection.video.enabled', False)
-profile.set_preference('media.peerconnection.identity.timeout', 1)
-profile.set_preference('privacy.firstparty.isolate', True)
-profile.set_preference('privacy.resistFingerprinting', True)
-profile.set_preference('privacy.trackingprotection.fingerprinting.enabled', True)
-profile.set_preference('privacy.trackingprotection.cryptomining.enabled', True)
-profile.set_preference('privacy.trackingprotection.enabled', True)
-profile.set_preference('browser.send_pings', False)
-profile.set_preference('browser.sessionstore.max_tabs_undo', 0)
-profile.set_preference('browser.sessionstore.privacy_level', 2)
-profile.set_preference('browser.urlbar.speculativeConnect.enabled', False)
-profile.set_preference('dom.event.clipboardevents.enabled', False)
-profile.set_preference('media.eme.enabled', False)
-profile.set_preference('media.gmp-widevinecdm.enabled', False)
-profile.set_preference('media.navigator.enabled', False)
-profile.set_preference('network.cookie.cookieBehavior', 2)
-profile.set_preference('network.cookie.lifetimePolicy', 2)
-profile.set_preference('network.http.referer.XOriginPolicy', 2)
-profile.set_preference('network.http.referer.XOriginTrimmingPolicy', 2)
-profile.set_preference('network.IDN_show_punycode', True)
-profile.set_preference('webgl.disabled', True)
-
-# Settings unique to https://restoreprivacy.com/firefox-privacy/
-profile.set_preference('geo.enabled', False)
-profile.set_preference('media.peerconnection.enabled', False)
-profile.set_preference('network.dns.disablePrefetch', True)
-profile.set_preference('network.prefetch-next', False)
+for setting_name, setting_value in profile_settings.items():
+    profile.set_preference(setting_name, setting_value)
 
 options = webdriver.FirefoxOptions()
 options.headless = True
@@ -64,7 +60,7 @@ browser = webdriver.Firefox(firefox_profile=profile, options=options)
 
 ext_prefix = 'https://addons.mozilla.org/en-US/firefox/addon/'
 exts = [
-    # 'ublock-origin',  # Blocks ads & such
+    'ublock-origin',  # Blocks ads & such
     # 'https-everywhere',  # TODO: Figure out how to enable 'Encryt All Sites Eligble'
     # 'decentraleyes',  # Blocks Content Management Systems and handles their abilities locally
     'umatrix'  # Will block Disqus on HorribleSubs automatically
@@ -96,8 +92,9 @@ try:
     for i, div in enumerate(divs):
         browser.get('https://horriblesubs.info' + div.a['href'])
 
-        # Wait to dodge `selenium.common.exceptions.ElementNotInteractableException: Message: Element could not be scrolled into view`
-        WebDriverWait(browser, 15).until(EC.element_to_be_clickable((By.CLASS_NAME, 'more-button')))
+        # Wait to dodge `selenium.common.exceptions.ElementNotInteractableException`
+        WebDriverWait(browser, 15)\
+            .until(EC.element_to_be_clickable((By.CLASS_NAME, 'more-button')))
 
         # Expand the whole listing to get all the episodes
         if not browser.find_elements_by_id('01'):
@@ -134,6 +131,13 @@ try:
 finally:
     browser.quit()
     rmtree(addons_path)
+
+
+def get_dl_path():
+    # TODO: Check if this drive has space, else check another drive
+    # if there's no free space, crash
+    return 'E:/Torrents/'
+
 
 try:
     # Web UI -> 'Bypass authentication for hosts on localhost' should be enabled
