@@ -1,5 +1,4 @@
 import os
-import traceback
 
 from sys import platform
 from shutil import rmtree
@@ -37,7 +36,6 @@ def get_addons_path():
     return path
 
 
-dl_path = get_dl_path()
 addons_path = get_addons_path()
 profile = webdriver.FirefoxProfile()
 
@@ -142,11 +140,9 @@ try:
                         magnet = a['href']
 
             if magnet is not None:
-                season[dl_path + div.a.text].append(magnet)
+                season[div.a.text].append(magnet)
 
-        print('Progress:', round(((i + 1) / size) * 100, 2), '%')
-except Exception:
-    print(traceback.print_exc())
+        print('[%]', round(((i + 1) / size) * 100, 3))
 finally:
     browser.quit()
     rmtree(addons_path)
@@ -159,7 +155,7 @@ try:
     # Use DP to decrease show fetch time
     for path, magnets in season.items():
         for magnet in magnets:
-            qb.download_from_link(magnet, savepath=path, category='anime')
+            qb.download_from_link(magnet, savepath=get_dl_path() + path, category='anime')
 
     qb.resume_all()
 except ConnectionError:
