@@ -1,6 +1,5 @@
 import os
 
-from sys import platform
 from shutil import rmtree
 
 from selenium import webdriver
@@ -21,22 +20,6 @@ def get_dl_path():
     # if there's no free space, crash
     return 'E:/Torrents/'
 
-
-def get_addons_path():
-    path = os.getcwd()
-
-    if platform == 'win32':
-        path += '\\addons\\'
-    else:
-        path += '/addons/'
-
-    if not os.path.exists(path):
-        os.mkdir(path)
-
-    return path
-
-
-addons_path = get_addons_path()
 profile = webdriver.FirefoxProfile()
 
 # Run the browser in private mode
@@ -87,12 +70,17 @@ exts = [
     'umatrix'  # Will block Disqus on HorribleSubs automatically
 ]
 
+addons_path = os.path.normpath(os.path.join(os.getcwd(), 'addons'))
+
+if not os.path.exists(addons_path):
+    os.mkdir(addons_path)
+
 for ext in exts:
     browser.get(ext_prefix + ext)
     btn = browser.find_element_by_class_name('AMInstallButton')
     ref = btn.find_element_by_tag_name('a').get_attribute('href')
     url = ref.split('?')[0]
-    addon = download(url, out=addons_path).replace('/', '')
+    addon = os.path.normpath(download(url, out=addons_path))
     browser.install_addon(addon, temporary=True)
 
 browser.get('https://horriblesubs.info/current-season/')
