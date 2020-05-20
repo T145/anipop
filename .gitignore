@@ -13,19 +13,12 @@ _MACOSX
 !.github
 !.gitignore
 !.gitattributes
+
 # or EditorConfig
 !.editorconfig
 
-# Ignore generic & archive binaries
-*.7z
-*.dmg
-*.gz
-*.iso
-*.rar
-*.tar
-*.zip
-
-/addons/
+# Custom definitions
+/profile/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
